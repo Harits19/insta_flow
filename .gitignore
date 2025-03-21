@@ -3,3 +3,4 @@ node_modules/
 photos/
 .DS_Store
 dist/
+cookies.json

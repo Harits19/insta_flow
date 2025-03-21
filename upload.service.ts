@@ -1,5 +1,7 @@
-import { Page, WaitForSelectorOptions } from "puppeteer";
+import { Browser, Page, WaitForSelectorOptions } from "puppeteer";
 import dotenv from "dotenv";
+import ResizeService from "./resize.service";
+import * as fs from "fs";
 
 // Load environment variables
 dotenv.config();
@@ -9,11 +11,13 @@ const PASSWORD: string = process.env.INSTAGRAM_PASSWORD || "";
 
 export default class UploadService {
   page: Page;
+  browser: Browser;
 
   timeout = 60 * 60 * 1000;
 
-  constructor(page: Page) {
+  constructor(page: Page, browser: Browser) {
     this.page = page;
+    this.browser = browser;
   }
 
   waitForSelector<Selector extends string>(
@@ -27,21 +31,55 @@ export default class UploadService {
   }
 
   startLogin = async () => {
-    await this.page.type("input[name='username']", USERNAME, { delay: 100 });
-    await this.page.type("input[name='password']", PASSWORD, { delay: 100 });
-    await this.page.click("button[type='submit']");
+    const COOKIES_FILE_PATH = "cookies.json"; // Path to save cookies
 
-    await this.page.waitForNavigation({ waitUntil: "networkidle2" });
+    // Check if cookies file exists and load the cookies if it does
+    if (fs.existsSync(COOKIES_FILE_PATH)) {
+      const cookies = JSON.parse(fs.readFileSync(COOKIES_FILE_PATH, "utf8"));
+      await this.page.setCookie(...cookies);
+    }
+
+    // Navigate to Instagram
+    await this.page.goto("https://www.instagram.com/accounts/login/");
+
+    // If not logged in, login manually
+    const isLoggedIn = await this.page.evaluate(() => {
+      return window.location.href.includes("instagram.com/accounts/login/");
+    });
+
+    console.log({ isLoggedIn });
+
+    if (isLoggedIn) {
+      // Fill in the login form and submit
+      // Wait for the login form to appear
+      await this.page.waitForSelector('input[name="username"]');
+      await this.page.type('input[name="username"]', USERNAME);
+      await this.page.type('input[name="password"]', PASSWORD);
+      await this.page.click('button[type="submit"]');
+
+      // Wait for page to load after login (can be optimized by checking specific elements)
+      await this.page.waitForNavigation();
+
+      // Save cookies after successful login
+      const cookies = await this.browser.cookies();
+      fs.writeFileSync(COOKIES_FILE_PATH, JSON.stringify(cookies));
+
+      console.log("Logged in and cookies saved!");
+    } else {
+      console.log("Already logged in!");
+    }
   };
 
   startUpload = async ({
     caption,
     items,
     index,
+    reduceQuality = false,
   }: {
     items: string[];
     caption: string;
     index: number;
+    reduceQuality?: boolean;
   }) => {
     const xPath = {
       newPost: "svg[aria-label='New post']",
@@ -57,6 +95,12 @@ export default class UploadService {
 
     await this.waitForSelector(xPath.inputFile);
     const fileInput = await this.page.$(xPath.inputFile);
+
+    if (reduceQuality) {
+      items = await Promise.all(
+        items.map((item) => ResizeService.reduceQuality(item))
+      );
+    }
 
     if (fileInput) {
       await fileInput.uploadFile(...items);
