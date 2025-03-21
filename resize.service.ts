@@ -41,7 +41,7 @@ export default class ResizeService {
     try {
       await fs.mkdir(this.outputDirectory);
     } catch (error) {
-      console.error(error);
+      console.log(error);
     }
   }
 
@@ -93,7 +93,7 @@ export default class ResizeService {
         .jpeg({ quality: 100 })
         .toFile(outputPath);
     } catch (error) {
-      console.error("Error resizing image:", error);
+      console.log("Error resizing image:", error);
     }
   }
 }

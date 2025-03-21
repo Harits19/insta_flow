@@ -31,19 +31,22 @@ export default class FileService {
    * sort by number of file eg. "xavierstory - 123.jpg"
    */
   static sortByNumber(files: string[]) {
+    const getNumber = (value: string) => {
+      const numberString = value.split("-").pop()?.split(".").at(0);
+      if (!numberString) {
+        throw new Error(
+          `failed to get number base on filename, filename: ${value}`
+        );
+      }
+
+      return parseInt(numberString);
+    };
+
+
     const result = files.sort((a, b) => {
-      const getNumber = (value: string) => {
-        const numberString = a.split("-").pop()?.split(".").at(0);
-        if (!numberString) {
-          throw new Error(
-            `failed to get number base on filename, filename: ${value}`
-          );
-        }
-
-        return parseInt(numberString);
-      };
-
-      return getNumber(a) - getNumber(b);
+      const numberA = getNumber(a);
+      const numberB = getNumber(b);
+      return numberA - numberB;
     });
 
     return result;

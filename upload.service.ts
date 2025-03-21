@@ -1,4 +1,4 @@
-import { Page } from "puppeteer";
+import { Page, WaitForSelectorOptions } from "puppeteer";
 import dotenv from "dotenv";
 
 // Load environment variables
@@ -10,8 +10,20 @@ const PASSWORD: string = process.env.INSTAGRAM_PASSWORD || "";
 export default class UploadService {
   page: Page;
 
+  timeout = 60 * 60 * 1000;
+
   constructor(page: Page) {
     this.page = page;
+  }
+
+  waitForSelector<Selector extends string>(
+    selector: Selector,
+    options?: WaitForSelectorOptions
+  ) {
+    return this.page.waitForSelector(selector, {
+      timeout: this.timeout,
+      ...options,
+    });
   }
 
   startLogin = async () => {
@@ -40,10 +52,10 @@ export default class UploadService {
       close: "svg[aria-label='Close']",
     } as const;
 
-    await this.page.waitForSelector(xPath.newPost);
+    await this.waitForSelector(xPath.newPost);
     await this.page.click(xPath.newPost);
 
-    await this.page.waitForSelector(xPath.inputFile);
+    await this.waitForSelector(xPath.inputFile);
     const fileInput = await this.page.$(xPath.inputFile);
 
     if (fileInput) {
@@ -52,13 +64,12 @@ export default class UploadService {
       throw new Error("file input is undefined");
     }
 
-    const runTimeOut = () =>
-      new Promise((resolve) => setTimeout(resolve, 2000));
+    const runTimeOut = () => new Promise((resolve) => setTimeout(resolve, 1));
 
     const clickButton = async (text: string) => {
       await runTimeOut();
 
-      await this.page.waitForSelector(xPath.button, { visible: true });
+      await this.waitForSelector(xPath.button, { visible: true });
       const nextButtons = await this.page.$$(xPath.button);
 
       for (const button of nextButtons) {
@@ -76,7 +87,7 @@ export default class UploadService {
     const clickSvg = async (ariaLabel: string) => {
       const xPath = `svg[aria-label='${ariaLabel}']`;
       await runTimeOut();
-      await this.page.waitForSelector(xPath);
+      await this.waitForSelector(xPath);
       await this.page.click(xPath);
     };
 
@@ -89,17 +100,15 @@ export default class UploadService {
     await clickButton("Next");
 
     await runTimeOut();
-    await this.page.waitForSelector(xPath.caption);
+    await this.waitForSelector(xPath.caption);
     await this.page.type(xPath.caption, `${caption} (${index + 1})`);
 
     await runTimeOut();
     await clickButton("Share");
 
-    await this.page.waitForSelector(xPath.successUpload, {
-      timeout: 60 * 60 * 1000,
-    });
+    await this.waitForSelector(xPath.successUpload);
 
-    await this.page.waitForSelector(xPath.close);
+    await this.waitForSelector(xPath.close);
     await this.page.click(xPath.close);
   };
 }
