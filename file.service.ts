@@ -1,0 +1,68 @@
+import { Stats } from "fs";
+import * as fs from "fs/promises";
+import path from "path";
+
+export default class FileService {
+  async getAllImageFiles() {
+    const directory = "./photos";
+
+    const files = await fs.readdir(directory);
+
+    const result: string[] = [];
+
+    for (const file of files) {
+      const filePath = path.join(directory, file);
+      const stats = await fs.stat(filePath);
+
+      if (!stats.isFile()) {
+        continue;
+      }
+
+      const imageExtensions = [".jpg", ".jpeg", ".png"];
+      const ext = path.extname(filePath).toLowerCase();
+      if (!imageExtensions.includes(ext)) {
+        continue;
+      }
+
+      result.push(filePath);
+    }
+
+    return result;
+  }
+
+  /**
+   * sort by number of file eg. "xavierstory - 123.jpg"
+   */
+  sortByNumber(files: string[]) {
+    const result = files.sort((a, b) => {
+      const getNumber = (value: string) => {
+        const numberString = a.split("-").pop()?.split(".").at(0);
+        if (!numberString) {
+          throw new Error(
+            `failed to get number base on filename, filename: ${value}`
+          );
+        }
+
+        return parseInt(numberString);
+      };
+
+      return getNumber(a) - getNumber(b);
+    });
+
+    return result;
+  }
+
+  batchFile(files: string[]) {
+    const INSTAGRAM_MAX_POST = 10;
+
+    const result: string[][] = [];
+
+    for (let index = 0; index < files.length; index += INSTAGRAM_MAX_POST) {
+      const batch = files.slice(index, index + INSTAGRAM_MAX_POST);
+
+      result.push(batch);
+    }
+
+    return result;
+  }
+}

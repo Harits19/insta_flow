@@ -8,10 +8,6 @@ dotenv.config();
 const USERNAME: string = process.env.INSTAGRAM_USERNAME || "";
 const PASSWORD: string = process.env.INSTAGRAM_PASSWORD || "";
 
-const IMAGE_PATH: string = path.resolve(
-  __dirname,
-  process.env.IMAGE_PATH || ""
-);
 const CAPTION: string = process.env.CAPTION || "";
 
 export default class UploadService {
@@ -29,14 +25,24 @@ export default class UploadService {
     await this.page.waitForNavigation({ waitUntil: "networkidle2" });
   };
 
-  startUpload = async () => {
-    await this.page.waitForSelector("svg[aria-label='New post']");
-    await this.page.click("svg[aria-label='New post']");
+  startUpload = async (imagePath: string[]) => {
+    const xPath = {
+      newPost: "svg[aria-label='New post']",
+      inputFile: "input[type='file']",
+      button: "div[role='button'][tabindex='0']",
+      caption: "div[aria-label='Write a caption...']",
+      successUpload: "img[alt='Animated checkmark']",
+      close: "svg[aria-label='Close']",
+    } as const;
 
-    await this.page.waitForSelector("input[type='file']");
-    const fileInput = await this.page.$("input[type='file']");
+    await this.page.waitForSelector(xPath.newPost);
+    await this.page.click(xPath.newPost);
+
+    await this.page.waitForSelector(xPath.inputFile);
+    const fileInput = await this.page.$(xPath.inputFile);
+
     if (fileInput) {
-      await fileInput.uploadFile(IMAGE_PATH);
+      await fileInput.uploadFile(...imagePath);
     } else {
       throw new Error("file input is undefined");
     }
@@ -46,10 +52,9 @@ export default class UploadService {
 
     const clickButton = async (text: string) => {
       await runTimeOut();
-      const idNext = "div[role='button'][tabindex='0']";
 
-      await this.page.waitForSelector(idNext, { visible: true });
-      const nextButtons = await this.page.$$(idNext);
+      await this.page.waitForSelector(xPath.button, { visible: true });
+      const nextButtons = await this.page.$$(xPath.button);
 
       for (const button of nextButtons) {
         const buttonText = await this.page.evaluate(
@@ -67,16 +72,18 @@ export default class UploadService {
 
     await clickButton("Next");
 
-    const idCaption = "div[aria-label='Write a caption...']";
     await runTimeOut();
-    await this.page.waitForSelector(idCaption);
-    await this.page.type(idCaption, CAPTION);
+    await this.page.waitForSelector(xPath.caption);
+    await this.page.type(xPath.caption, CAPTION);
 
     await runTimeOut();
     await clickButton("Share");
 
-    await this.page.waitForSelector("img[alt='Animated checkmark']", {
+    await this.page.waitForSelector(xPath.successUpload, {
       timeout: 60 * 60 * 1000,
     });
+
+    await this.page.waitForSelector(xPath.close);
+    await this.page.click(xPath.close);
   };
 }

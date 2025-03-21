@@ -1,7 +1,14 @@
 import puppeteer from "puppeteer";
 import UploadService from "./upload.service";
+import FileService from "./file.service";
 
-async function uploadToInstagram(): Promise<void> {
+async function main(): Promise<void> {
+  const fileService = new FileService();
+
+  const files = await fileService.getAllImageFiles();
+  const sortedFile = fileService.sortByNumber(files);
+  const batchFile = fileService.batchFile(sortedFile);
+
   const browser = await puppeteer.launch({
     headless: false,
     defaultViewport: null,
@@ -17,7 +24,9 @@ async function uploadToInstagram(): Promise<void> {
 
     await service.startLogin();
 
-    await service.startUpload();
+    for (const item of batchFile) {
+      await service.startUpload(item);
+    }
   } catch (error) {
     console.error(error);
   } finally {
@@ -25,4 +34,4 @@ async function uploadToInstagram(): Promise<void> {
   }
 }
 
-uploadToInstagram();
+main();
