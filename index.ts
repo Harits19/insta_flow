@@ -1,13 +1,24 @@
 import puppeteer from "puppeteer";
 import UploadService from "./upload.service";
+import ResizeService from "./resize.service";
 import FileService from "./file.service";
 
 async function main(): Promise<void> {
-  const fileService = new FileService();
+  const resizeService = new ResizeService({
+    aspectRatio: "4x5",
+    folderPath: "./photos",
+  });
 
-  const files = await fileService.getAllImageFiles();
-  const sortedFile = fileService.sortByNumber(files);
-  const batchFile = fileService.batchFile(sortedFile);
+  const caption = "Essential";
+
+  const directoryResizedImages = await resizeService.startResizeAllImage();
+  console.log({ directoryResizedImages });
+
+  const resizedFiles = await FileService.getAllImageFiles(
+    directoryResizedImages
+  );
+  const sortedFiles = FileService.sortByNumber(resizedFiles);
+  const batchFiles = FileService.batchFile(sortedFiles);
 
   const browser = await puppeteer.launch({
     headless: false,
@@ -24,8 +35,12 @@ async function main(): Promise<void> {
 
     await service.startLogin();
 
-    for (const item of batchFile) {
-      await service.startUpload(item);
+    for (const [index, item] of batchFiles.entries()) {
+      await service.startUpload({
+        items: item.map((item) => `${directoryResizedImages}/${item}`),
+        caption,
+        index,
+      });
     }
   } catch (error) {
     console.error(error);

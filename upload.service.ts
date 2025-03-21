@@ -1,14 +1,11 @@
 import { Page } from "puppeteer";
 import dotenv from "dotenv";
-import path from "path";
 
 // Load environment variables
 dotenv.config();
 
 const USERNAME: string = process.env.INSTAGRAM_USERNAME || "";
 const PASSWORD: string = process.env.INSTAGRAM_PASSWORD || "";
-
-const CAPTION: string = process.env.CAPTION || "";
 
 export default class UploadService {
   page: Page;
@@ -25,7 +22,15 @@ export default class UploadService {
     await this.page.waitForNavigation({ waitUntil: "networkidle2" });
   };
 
-  startUpload = async (imagePath: string[]) => {
+  startUpload = async ({
+    caption,
+    items,
+    index,
+  }: {
+    items: string[];
+    caption: string;
+    index: number;
+  }) => {
     const xPath = {
       newPost: "svg[aria-label='New post']",
       inputFile: "input[type='file']",
@@ -42,7 +47,7 @@ export default class UploadService {
     const fileInput = await this.page.$(xPath.inputFile);
 
     if (fileInput) {
-      await fileInput.uploadFile(...imagePath);
+      await fileInput.uploadFile(...items);
     } else {
       throw new Error("file input is undefined");
     }
@@ -68,13 +73,24 @@ export default class UploadService {
       }
     };
 
+    const clickSvg = async (ariaLabel: string) => {
+      const xPath = `svg[aria-label='${ariaLabel}']`;
+      await runTimeOut();
+      await this.page.waitForSelector(xPath);
+      await this.page.click(xPath);
+    };
+
+    await clickSvg("Select crop");
+
+    await clickSvg("Photo outline icon");
+
     await clickButton("Next");
 
     await clickButton("Next");
 
     await runTimeOut();
     await this.page.waitForSelector(xPath.caption);
-    await this.page.type(xPath.caption, CAPTION);
+    await this.page.type(xPath.caption, `${caption} (${index + 1})`);
 
     await runTimeOut();
     await clickButton("Share");

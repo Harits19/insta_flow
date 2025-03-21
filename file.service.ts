@@ -1,11 +1,8 @@
-import { Stats } from "fs";
 import * as fs from "fs/promises";
 import path from "path";
 
 export default class FileService {
-  async getAllImageFiles() {
-    const directory = "./photos";
-
+  static async getAllImageFiles(directory: string) {
     const files = await fs.readdir(directory);
 
     const result: string[] = [];
@@ -24,7 +21,7 @@ export default class FileService {
         continue;
       }
 
-      result.push(filePath);
+      result.push(file);
     }
 
     return result;
@@ -33,7 +30,7 @@ export default class FileService {
   /**
    * sort by number of file eg. "xavierstory - 123.jpg"
    */
-  sortByNumber(files: string[]) {
+  static sortByNumber(files: string[]) {
     const result = files.sort((a, b) => {
       const getNumber = (value: string) => {
         const numberString = a.split("-").pop()?.split(".").at(0);
@@ -52,7 +49,7 @@ export default class FileService {
     return result;
   }
 
-  batchFile(files: string[]) {
+  static batchFile(files: string[]) {
     const INSTAGRAM_MAX_POST = 10;
 
     const result: string[][] = [];
