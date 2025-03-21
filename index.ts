@@ -12,7 +12,6 @@ async function main(): Promise<void> {
   const caption = "Essential";
 
   const directoryResizedImages = await resizeService.startResizeAllImage();
-  console.log({ directoryResizedImages });
 
   const resizedFiles = await FileService.getAllImageFiles(
     directoryResizedImages
