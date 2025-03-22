@@ -1,8 +1,8 @@
 import sharp from "sharp";
 import FileService from "./file.service";
 import * as fs from "fs/promises";
+import { AspectRatio } from "./resize.types";
 
-type AspectRatio = "16x9" | "1x1" | "4x5";
 export default class ResizeService {
   aspectRatio: AspectRatio;
   directory: string;

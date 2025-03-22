@@ -2,13 +2,13 @@ import * as fs from "fs/promises";
 import path from "path";
 
 export default class FileService {
-  static async getAllImageFiles(directory: string) {
-    const files = await fs.readdir(directory);
+  static async getAllImageFiles(folderPath: string) {
+    const files = await fs.readdir(folderPath);
 
     const result: string[] = [];
 
     for (const file of files) {
-      const filePath = path.join(directory, file);
+      const filePath = path.join(folderPath, file);
       const stats = await fs.stat(filePath);
 
       if (!stats.isFile()) {
@@ -42,7 +42,6 @@ export default class FileService {
       return parseInt(numberString);
     };
 
-
     const result = files.sort((a, b) => {
       const numberA = getNumber(a);
       const numberB = getNumber(b);
@@ -64,5 +63,20 @@ export default class FileService {
     }
 
     return result;
+  }
+
+  static async instagramFileReadyToUpload(folderPath: string) {
+    const files = await FileService.getAllImageFiles(folderPath);
+    const sortFiles = FileService.sortByNumber(files);
+    const batchFiles = FileService.batchFile(sortFiles);
+    console.log(
+      `files length ${files.length}, sorted files length ${sortFiles.length}, batch files length ${batchFiles.length}`
+    );
+    console.log("result batch files ", JSON.stringify(batchFiles));
+
+    if (batchFiles.length === 0) {
+      throw new Error("batch files is empty");
+    }
+    return batchFiles;
   }
 }
