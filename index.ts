@@ -7,8 +7,7 @@ import { listFolder, prefixPath } from "./index.constant";
 
 async function main() {
   const browser = await puppeteer.launch({
-    headless: false,
-    defaultViewport: null,
+    headless: true,
   });
 
   const page = await browser.newPage();

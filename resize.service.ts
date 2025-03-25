@@ -1,6 +1,7 @@
 import sharp from "sharp";
 import FileService from "./file.service";
 import * as fs from "fs/promises";
+import * as fsV2 from "fs";
 import { AspectRatio } from "./resize.types";
 
 export default class ResizeService {
@@ -52,9 +53,7 @@ export default class ResizeService {
   async startResizeAllImage() {
     const files = await FileService.getAllImageFiles(this.directory);
     await this.createOutputDirectory();
-    for (const file of files) {
-      await this.resizeImage(file);
-    }
+    await Promise.all(files.map((file) => this.resizeImage(file)));
 
     return this.outputDirectory;
   }
@@ -83,10 +82,16 @@ export default class ResizeService {
   }
 
   async resizeImage(file: string) {
+    const outputPath = this.getOutputPath(file);
+
+    if (fsV2.existsSync(outputPath)) {
+      // console.log("file ", outputPath, " already exist, does not need resize");
+      console.log('file is exist, start to delete this file ', outputPath);
+      await fs.unlink(outputPath);
+    }
     const aspectRatio = this.aspectRatioValue;
 
     const inputPath = this.getInputPath(file); // Replace with your image
-    const outputPath = this.getOutputPath(file);
 
     const metadata = await sharp(inputPath).metadata();
 
@@ -113,7 +118,7 @@ export default class ResizeService {
           fit: sharp.fit.contain,
           background: "white",
         })
-        .jpeg({ quality: 100 })
+        .jpeg({ quality: 70 })
         .toFile(outputPath);
     } catch (error) {
       console.log("Error resizing image:", error);

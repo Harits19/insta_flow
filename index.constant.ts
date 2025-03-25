@@ -9,37 +9,52 @@ export const listFolder: {
   startIndex?: number;
   reduceQuality?: boolean;
 }[] = [
+  // {
+  //   path: "couple",
+  //   caption: "Couple",
+  //   startIndex: 10,
+  //   aspectRatio: '4x5'
+  // },
+  // {
+  //   path: "beauty shot",
+  //   caption: "Beauty Shot",
+  //   aspectRatio: "4x5",
+  // },
   {
-    path: "couple/Size 4x5",
-    caption: "Couple",
-  },
-  {
-    path: "decor/Size 1x1",
+    path: "decor",
     caption: "Decor",
+    aspectRatio: "1x1",
+    startIndex: 1,
   },
   {
-    path: "family/Size 16x9",
+    path: "family",
     caption: "Family",
+    aspectRatio: "16x9",
   },
   {
-    path: "group/Size 16x9",
+    path: "group",
     caption: "Group",
     aspectRatio: "16x9",
   },
   {
-    path: "mc taufiq/Size 4x5",
+    path: "mc taufiq",
     caption: "MC Taufiq",
+    aspectRatio: '4x5',
   },
   {
-    path: "mc vano/Size 4x5",
+    path: "mc vano",
     caption: "MC Vano",
+    aspectRatio: '4x5',
+
   },
   {
-    path: "prepare/Size 4x5",
+    path: "prepare",
     caption: "Prepare",
+    aspectRatio: '4x5'
   },
   {
-    path: "resepsi/Size 16x9",
+    path: "resepsi",
     caption: "Resepsi",
+    aspectRatio: '16x9'
   },
 ];

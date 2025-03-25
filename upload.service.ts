@@ -13,7 +13,7 @@ export default class UploadService {
   page: Page;
   browser: Browser;
 
-  timeout = 60 * 60 * 1000;
+  // timeout = 5 * 60 * 1000;
 
   constructor(page: Page, browser: Browser) {
     this.page = page;
@@ -25,7 +25,6 @@ export default class UploadService {
     options?: WaitForSelectorOptions
   ) {
     return this.page.waitForSelector(selector, {
-      timeout: this.timeout,
       ...options,
     });
   }
@@ -36,7 +35,7 @@ export default class UploadService {
     // Check if cookies file exists and load the cookies if it does
     if (fs.existsSync(COOKIES_FILE_PATH)) {
       const cookies = JSON.parse(fs.readFileSync(COOKIES_FILE_PATH, "utf8"));
-      await this.page.setCookie(...cookies);
+      await this.browser.setCookie(...cookies);
     }
 
     // Navigate to Instagram
@@ -88,6 +87,7 @@ export default class UploadService {
       caption: "div[aria-label='Write a caption...']",
       successUpload: "img[alt='Animated checkmark']",
       close: "svg[aria-label='Close']",
+      errorUpload: "svg[aria-label='Something went wrong. Please try again.']",
     } as const;
 
     await this.waitForSelector(xPath.newPost);
@@ -97,12 +97,16 @@ export default class UploadService {
     const fileInput = await this.page.$(xPath.inputFile);
 
     if (reduceQuality) {
-      items = await Promise.all(
+      const newItems = await Promise.all(
         items.map((item) => ResizeService.reduceQuality(item))
       );
+
+      console.log("new items after reduce quality ", newItems);
+      items = newItems;
     }
 
     if (fileInput) {
+      console.log("start upload items ", items);
       await fileInput.uploadFile(...items);
     } else {
       throw new Error("file input is undefined");
@@ -147,8 +151,13 @@ export default class UploadService {
     await this.waitForSelector(xPath.caption);
     await this.page.type(xPath.caption, `${caption} (${index + 1})`);
 
+    const start = Date.now(); // Start time
+
     await runTimeOut();
     await clickButton("Share");
+
+    const end = Date.now(); // End time
+    console.log(`Time taken: ${end - start}ms`);
 
     await this.waitForSelector(xPath.successUpload);
 
